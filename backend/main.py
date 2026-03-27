@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.api.ws_interview import router as ws_interview_router
 
 app = FastAPI()
 
@@ -9,6 +10,8 @@ app.add_middleware(
     allow_methods=["GET"],
     allow_headers=["*"],
 )
+
+app.include_router(ws_interview_router)
 
 
 @app.get("/health")
