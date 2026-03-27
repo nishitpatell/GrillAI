@@ -37,5 +37,50 @@ This is a **monorepo** containing two fully independent applications:
 - Run command: `npm run dev` (from `frontend/`)
 
 ### Communication
-- The frontend communicates with the backend exclusively via HTTP (REST API).
+- The frontend communicates with the backend via HTTP (REST API), Web Sockets (SignalR), etc.
 - No shared code, no shared config files, no shared environment files between backend and frontend.
+
+---
+
+## Architecture & Design Principles
+
+### Backend (FastAPI) — Layered Architecture
+
+Organize code into strict layers by responsibility:
+
+- **`app/api/`** — HTTP routes and endpoints only. No business logic here. Routes must delegate to services.
+- **`app/services/`** — Business logic and AI orchestration. Services contain the core application intelligence and coordinate between repositories and external systems.
+- **`app/repositories/`** — Data access layer. All database operations must go through repositories. Repositories expose simple CRUD-like interfaces.
+- **`app/models/`** — Pydantic schemas, request/response models, and data validation. Database models may live here or in repositories depending on scale.
+
+**Key Rule:** Endpoints must never contain business logic. An endpoint should:
+1. Parse/validate the request
+2. Call a service
+3. Return the response
+
+Use **Dependency Injection** (FastAPI's `Depends()`) to inject services and repositories into route handlers.
+
+### Frontend (React) — Feature-Based Architecture
+
+Organize by domain/feature, not by file type:
+
+- **`src/features/<domain_name>/`** — Self-contained feature folders. Each feature can have its own components, hooks, types, utils, and styles.
+  - `src/features/health/` (example)
+    - `HealthCheck.tsx`
+    - `useHealth.ts` (custom hook)
+    - `types.ts`
+- **`src/components/`** — Global, reusable UI components that are feature-agnostic (Button, Modal, Card, etc.).
+
+**Key Rule:** Features are self-contained. Avoid reaching across feature boundaries; instead, lift shared logic to global components or hooks.
+
+### Design Principles
+
+1. **SOLID Principles:** Code must adhere to Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion principles.
+
+2. **Dependency Injection (Backend):** Use FastAPI's `Depends()` to inject services into route handlers. Avoid tight coupling and make testing easier.
+
+3. **Composition Over Inheritance (Frontend):** Favor React hooks and component composition. Minimize class-based components and deep inheritance hierarchies.
+
+### Progressive Unfolding
+
+Do not create these folders and structure until a feature explicitly requires them. Start simple and evolve the structure as the application grows. Premature folder creation adds unnecessary complexity.
