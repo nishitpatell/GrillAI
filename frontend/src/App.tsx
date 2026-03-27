@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ChatInterface from './features/interview/ChatInterface'
 
 const BACKEND_URL = 'http://localhost:8000'
 
@@ -35,6 +36,7 @@ export default function App() {
       {status === 'error' && (
         <p style={{ color: 'red' }}>Could not reach {BACKEND_URL}/health</p>
       )}
+      <ChatInterface />
     </div>
   )
 }
