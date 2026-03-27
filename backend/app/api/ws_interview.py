@@ -1,4 +1,5 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from app.services.agents.roleplay_agent import stream_interview_response
 
 router = APIRouter()
 
@@ -9,6 +10,8 @@ async def interview_websocket(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            await websocket.send_text(f"Echo: {data}")
+            async for chunk in stream_interview_response(data):
+                await websocket.send_text(chunk)
+            await websocket.send_text("[END]")
     except WebSocketDisconnect:
         pass

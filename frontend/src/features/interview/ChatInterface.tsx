@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 
 type Message = {
   id: number
   text: string
-  from: 'user' | 'server'
+  from: 'user' | 'assistant'
 }
 
 const WS_URL = 'ws://localhost:8000/ws/interview'
@@ -12,25 +12,48 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [connected, setConnected] = useState(false)
+  const [streaming, setStreaming] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const idRef = useRef(0)
+  const assistantIdRef = useRef<number | null>(null)
+
+  const handleMessage = useCallback((event: MessageEvent) => {
+    const data: string = event.data
+
+    if (data === '[END]') {
+      assistantIdRef.current = null
+      setStreaming(false)
+      return
+    }
+
+    if (assistantIdRef.current === null) {
+      const newId = ++idRef.current
+      assistantIdRef.current = newId
+      setMessages((prev) => [...prev, { id: newId, text: data, from: 'assistant' }])
+    } else {
+      const targetId = assistantIdRef.current
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === targetId ? { ...msg, text: msg.text + data } : msg
+        )
+      )
+    }
+  }, [])
 
   useEffect(() => {
     const ws = new WebSocket(WS_URL)
     wsRef.current = ws
 
     ws.onopen = () => setConnected(true)
-    ws.onclose = () => setConnected(false)
-    ws.onmessage = (event) => {
-      setMessages((prev) => [
-        ...prev,
-        { id: ++idRef.current, text: event.data, from: 'server' },
-      ])
+    ws.onclose = () => {
+      setConnected(false)
+      setStreaming(false)
     }
+    ws.onmessage = handleMessage
 
     return () => ws.close()
-  }, [])
+  }, [handleMessage])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -38,10 +61,12 @@ export default function ChatInterface() {
 
   function sendMessage() {
     const text = input.trim()
-    if (!text || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return
+    if (!text || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN || streaming)
+      return
     wsRef.current.send(text)
     setMessages((prev) => [...prev, { id: ++idRef.current, text, from: 'user' }])
     setInput('')
+    setStreaming(true)
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -79,10 +104,14 @@ export default function ChatInterface() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type a message…"
-          disabled={!connected}
+          disabled={!connected || streaming}
         />
-        <button style={styles.button} onClick={sendMessage} disabled={!connected}>
-          Send
+        <button
+          style={styles.button}
+          onClick={sendMessage}
+          disabled={!connected || streaming}
+        >
+          {streaming ? '…' : 'Send'}
         </button>
       </div>
     </div>
@@ -132,6 +161,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     lineHeight: 1.4,
     wordBreak: 'break-word',
+    whiteSpace: 'pre-wrap',
   },
   inputRow: {
     display: 'flex',
