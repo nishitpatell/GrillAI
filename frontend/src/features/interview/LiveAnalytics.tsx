@@ -1,3 +1,4 @@
+import { Activity, AlertTriangle } from 'lucide-react'
 import type { Analysis } from './ChatInterface'
 
 type Props = {
@@ -6,25 +7,38 @@ type Props = {
 
 export default function LiveAnalytics({ analysis }: Props) {
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>Live Analytics</div>
+    <div className="glass flex flex-col h-full overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800">
+        <Activity size={15} className="text-emerald-400" />
+        <span className="text-sm font-semibold text-slate-300">Live Analytics</span>
+      </div>
 
       {!analysis ? (
-        <p style={styles.empty}>Waiting for first response…</p>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <p className="text-sm text-slate-600 text-center">Waiting for first response...</p>
+        </div>
       ) : (
-        <div style={styles.body}>
+        <div className="p-4 space-y-5">
           <ScoreBar label="Clarity" value={analysis.clarity} />
           <ScoreBar label="Depth" value={analysis.depth} />
           <ScoreBar label="Confidence" value={analysis.confidence} />
 
-          <div style={styles.flagsSection}>
-            <span style={styles.flagsLabel}>Flags</span>
+          <div className="pt-2 border-t border-slate-800/60">
+            <div className="flex items-center gap-1.5 mb-3">
+              <AlertTriangle size={13} className="text-slate-500" />
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Flags</span>
+            </div>
             {analysis.flags.length === 0 ? (
-              <span style={styles.noFlags}>None detected</span>
+              <span className="text-xs text-slate-600">None detected</span>
             ) : (
-              <div style={styles.flagList}>
+              <div className="flex flex-wrap gap-2">
                 {analysis.flags.map((flag) => (
-                  <span key={flag} style={styles.flag}>{flag}</span>
+                  <span
+                    key={flag}
+                    className="text-[11px] px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400/80 border border-amber-500/20 font-medium"
+                  >
+                    {flag}
+                  </span>
                 ))}
               </div>
             )}
@@ -37,97 +51,27 @@ export default function LiveAnalytics({ analysis }: Props) {
 
 function ScoreBar({ label, value }: { label: string; value: number }) {
   const pct = (value / 10) * 100
-  const color = value >= 7 ? '#22c55e' : value >= 4 ? '#f59e0b' : '#ef4444'
+  const colorClass =
+    value >= 7 ? 'bg-emerald-500' :
+    value >= 4 ? 'bg-amber-500' :
+    'bg-red-500'
+  const textColor =
+    value >= 7 ? 'text-emerald-400' :
+    value >= 4 ? 'text-amber-400' :
+    'text-red-400'
 
   return (
-    <div style={styles.scoreRow}>
-      <div style={styles.scoreLabel}>
-        <span>{label}</span>
-        <span style={{ fontWeight: 700 }}>{value}/10</span>
+    <div className="space-y-1.5">
+      <div className="flex justify-between items-center">
+        <span className="text-xs text-slate-400">{label}</span>
+        <span className={`text-xs font-bold tabular-nums ${textColor}`}>{value}/10</span>
       </div>
-      <div style={styles.barTrack}>
-        <div style={{ ...styles.barFill, width: `${pct}%`, background: color }} />
+      <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ease-out ${colorClass}`}
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </div>
   )
-}
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    width: 280,
-    border: '1px solid #d1d5db',
-    borderRadius: 8,
-    overflow: 'hidden',
-    fontFamily: 'sans-serif',
-    height: '100%',
-  },
-  header: {
-    padding: '0.75rem 1rem',
-    background: '#f9fafb',
-    borderBottom: '1px solid #d1d5db',
-    fontWeight: 600,
-    fontSize: 14,
-  },
-  empty: {
-    padding: '1rem',
-    color: '#9ca3af',
-    fontSize: 13,
-  },
-  body: {
-    padding: '1rem',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 16,
-  },
-  scoreRow: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 4,
-  },
-  scoreLabel: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: 13,
-    color: '#374151',
-  },
-  barTrack: {
-    height: 8,
-    background: '#e5e7eb',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: 4,
-    transition: 'width 0.4s ease',
-  },
-  flagsSection: {
-    marginTop: 4,
-  },
-  flagsLabel: {
-    fontSize: 13,
-    color: '#374151',
-    fontWeight: 600,
-    display: 'block',
-    marginBottom: 6,
-  },
-  noFlags: {
-    fontSize: 12,
-    color: '#9ca3af',
-  },
-  flagList: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  flag: {
-    fontSize: 11,
-    padding: '2px 8px',
-    borderRadius: 12,
-    background: '#fef3c7',
-    color: '#92400e',
-    fontWeight: 500,
-  },
 }
