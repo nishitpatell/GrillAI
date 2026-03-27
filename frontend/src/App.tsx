@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import ChatInterface from './features/interview/ChatInterface'
+import ChatInterface, { type Analysis } from './features/interview/ChatInterface'
+import LiveAnalytics from './features/interview/LiveAnalytics'
 
 const BACKEND_URL = 'http://localhost:8000'
 
@@ -7,6 +8,7 @@ type HealthStatus = 'idle' | 'loading' | 'ok' | 'error'
 
 export default function App() {
   const [status, setStatus] = useState<HealthStatus>('idle')
+  const [analysis, setAnalysis] = useState<Analysis | null>(null)
 
   async function checkHealth() {
     setStatus('loading')
@@ -36,7 +38,26 @@ export default function App() {
       {status === 'error' && (
         <p style={{ color: 'red' }}>Could not reach {BACKEND_URL}/health</p>
       )}
-      <ChatInterface />
+
+      <div style={styles.interviewLayout}>
+        <div style={styles.chatPane}>
+          <ChatInterface onAnalysis={setAnalysis} />
+        </div>
+        <LiveAnalytics analysis={analysis} />
+      </div>
     </div>
   )
+}
+
+const styles: Record<string, React.CSSProperties> = {
+  interviewLayout: {
+    display: 'flex',
+    gap: 16,
+    marginTop: '1.5rem',
+    height: 520,
+  },
+  chatPane: {
+    flex: 1,
+    minWidth: 0,
+  },
 }

@@ -6,9 +6,25 @@ type Message = {
   from: 'user' | 'assistant'
 }
 
+export type Analysis = {
+  clarity: number
+  depth: number
+  confidence: number
+  flags: string[]
+}
+
+type WsMessage =
+  | { type: 'token'; value: string }
+  | { type: 'end' }
+  | { type: 'analysis'; data: Analysis }
+
+type Props = {
+  onAnalysis?: (analysis: Analysis) => void
+}
+
 const WS_URL = 'ws://localhost:8000/ws/interview'
 
-export default function ChatInterface() {
+export default function ChatInterface({ onAnalysis }: Props) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [connected, setConnected] = useState(false)
@@ -19,27 +35,34 @@ export default function ChatInterface() {
   const assistantIdRef = useRef<number | null>(null)
 
   const handleMessage = useCallback((event: MessageEvent) => {
-    const data: string = event.data
+    const msg: WsMessage = JSON.parse(event.data)
 
-    if (data === '[END]') {
+    if (msg.type === 'end') {
       assistantIdRef.current = null
       setStreaming(false)
       return
     }
 
-    if (assistantIdRef.current === null) {
-      const newId = ++idRef.current
-      assistantIdRef.current = newId
-      setMessages((prev) => [...prev, { id: newId, text: data, from: 'assistant' }])
-    } else {
-      const targetId = assistantIdRef.current
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === targetId ? { ...msg, text: msg.text + data } : msg
-        )
-      )
+    if (msg.type === 'analysis') {
+      onAnalysis?.(msg.data)
+      return
     }
-  }, [])
+
+    if (msg.type === 'token') {
+      if (assistantIdRef.current === null) {
+        const newId = ++idRef.current
+        assistantIdRef.current = newId
+        setMessages((prev) => [...prev, { id: newId, text: msg.value, from: 'assistant' }])
+      } else {
+        const targetId = assistantIdRef.current
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === targetId ? { ...m, text: m.text + msg.value } : m
+          )
+        )
+      }
+    }
+  }, [onAnalysis])
 
   useEffect(() => {
     const ws = new WebSocket(WS_URL)
@@ -123,12 +146,10 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     width: '100%',
-    maxWidth: 600,
-    height: 480,
+    height: '100%',
     border: '1px solid #d1d5db',
     borderRadius: 8,
     overflow: 'hidden',
-    marginTop: '1.5rem',
     fontFamily: 'sans-serif',
   },
   header: {
