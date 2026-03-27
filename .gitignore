@@ -1,0 +1,26 @@
+# Environment Variables
+.env
+.env.local
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+.npm/
+
+# Python / Backend
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.pytest_cache/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code (Optional: ignores local session data but keeps your CLAUDE.md and skills)
+.claude/messages/
