@@ -4,7 +4,7 @@ from app.core.config import GEMINI_API_KEY
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-MODEL = "gemini-2.0-flash"
+MODEL = "gemini-2.5-flash-lite"
 
 SYSTEM_PROMPT = """
 You are a strict, highly critical Senior Engineering Manager conducting a technical interview.
