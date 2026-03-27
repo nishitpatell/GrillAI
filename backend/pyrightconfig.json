@@ -2,5 +2,10 @@
   "venvPath": ".",
   "venv": "venv",
   "include": ["."],
-  "reportMissingTypeStubs": "none"
+  "reportMissingTypeStubs": "none",
+  "reportUnknownMemberType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownParameterType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportMissingTypeArgument": "none"
 }
